@@ -10,13 +10,13 @@
     <main class="container p-5 mt-5 shadow mb-4">
         <h1 class="fw-bold">💬 Messenger ni arben</h1>
         <label for="user_name">Name:</label>
-        <input type="text" id="user_name" class="form-control" placeholde="Enter your chat name here....">
+        <input type="text" id="user_name" class="form-control" placeholder="Enter your chat name here....">
 
 
     <!-- Chat section -->
     <section>
-        <div class="card mt-4">
-            <div class="card-body">
+        <div class="card mt-4" style="overflow-y: scroll; height: 300px;">
+            <div class="card-body" id="message_area">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="alert bg-dark text-white rounded-4 ">
@@ -40,9 +40,87 @@
     </section>
     <!-- Chat Section -->
     <section>
-        <textarea placeholder="Write your message here..." id="" class="form-control rounded-1 mt-2"></textarea>
-        <button class="btn btn-dark mt-3">Send ➡</button>
+        <textarea placeholder="Write your message here..." id="message_content" class="form-control rounded-1 mt-2"></textarea>
+        <button id="send_button" class="btn btn-dark mt-3">Send</button>
     </section>
 </main>
+<script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, addDoc, orderBy, query, Timestamp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+    // Your web app's Firebase configuration
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+        apiKey: "AIzaSyDvAPAPS0eB-EOLq-qO1v-bev7ZkaXKTfQ",
+        authDomain: "groupchat-9876f.firebaseapp.com",
+        projectId: "groupchat-9876f",
+        storageBucket: "groupchat-9876f.appspot.com",
+        messagingSenderId: "246164534638",
+        appId: "1:246164534638:web:a04b4d73a9f364c1dd3d7f"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    // Initialize Cloud Firestore and get a reference to the service
+    const db = getFirestore(app); //db will hold the connection in the firebase database.
+    
+    //send new message
+    document.querySelector("#send_button").addEventListener("click",() =>{
+        if(document.querySelector("#user_name").value === "" || document.querySelector("#message_content").value === ""){
+            alert("Some Fields are empty!");
+        }else{
+        addDoc(collection(db, "messages"), {
+            sender: document.querySelector("#user_name").value,
+            message: document.querySelector("#message_content").value,
+            timestamp: Timestamp.fromDate(new Date())
+            });
+            document.querySelector("#message_content").value = "";
+        }
+    })
+    onSnapshot(query(collection(db, "messages"), orderBy("timestamp", "asc")), snapshot => 
+    { //when firebase database have modif or changes it will change realtime.
+        document.querySelector("#message_area").innerHTML = "";
+        snapshot.forEach(message => {   //snapshot means get a copy on the database it can listen and check for changes and it willl update on the frontend.
+            
+            if(message.data().sender === document.querySelector("#user_name").value){
+            
+                document.querySelector("#message_area").innerHTML +=
+            `
+            <div class="row mb-2">
+                    <div class="col-md-6 offset-6">
+                        <div class="alert bg-light text-black rounded-4 mb-0">
+                            <small class="fw-bold">${message.data().sender}</small>
+                            <br>
+                            <span>${message.data().message}</span>
+                        </div>
+                        <small class="text-secondary float-end">${message.data().timestamp.toDate().toLocaleTimeString(`en-US`)}</small> 
+                    </div>
+                </div>
+            `;
+            }else{
+                document.querySelector("#message_area").innerHTML +=
+            `
+            <div class="row mb-2">
+                    <div class="col-md-6">
+                        <div class="alert bg-dark text-white rounded-4 mb-0">
+                            <small class="fw-bold">${message.data().sender}</small>
+                            <br>
+                            <span>${message.data().message}</span>
+                        </div>
+                        <small class="text-secondary float-end">${message.data().timestamp.toDate().toLocaleTimeString(`en-US`)}</small> 
+                    </div>
+                </div>
+            `;}
+            
+        })
+        document.querySelector("#message_area").scrollIntoView(false)
+    });
+    
+</script>
 </body>
 </html>
